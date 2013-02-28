@@ -3,7 +3,6 @@
 <head>
 <link rel="canonical" href="{{ room_link }}"/>
 <meta http-equiv="X-UA-Compatible" content="chrome=1"/>
-<script src="/js/jsapi.js"></script>
 
 <!-- Load the polyfill to switch-hit between Chrome and Firefox -->
 <script src="/js/adapter.js"></script>
@@ -172,7 +171,8 @@
   function resetStatus() {
     if (!initiator) {
       setStatus("Waiting for someone to join: <a href=\"/?r={{ room_key }}\">/?r={{ room_key }}</a>");
-    } else {
+    }
+    else {
       setStatus("Initializing...");
     }
   }
@@ -181,10 +181,8 @@
     // Call into getUserMedia via the polyfill (adapter.js).
     var constraints = {"mandatory": {}, "optional": []};
     try {
-      getUserMedia({'audio':true, 'video':constraints}, onUserMediaSuccess,
-                   onUserMediaError);
-      console.log("Requested access to local media with mediaConstraints:\n" +
-                  "  \"" + JSON.stringify(constraints) + "\"");
+      getUserMedia({'audio':true, 'video':constraints}, onUserMediaSuccess, onUserMediaError);
+      console.log("Requested access to local media with mediaConstraints:\n" + "  \"" + JSON.stringify(constraints) + "\"");
     } catch (e) {
       alert("getUserMedia() failed. Is this a WebRTC capable browser?");
       console.log("getUserMedia failed with exception: " + e.message);
@@ -221,7 +219,7 @@
       console.log("Creating PeerConnection.");
       createPeerConnection();
       console.log("Adding local stream.");
-      pc.addStream(localStream);
+      //pc.addStream(localStream);
       started = true;
       // Caller initiates offer to peer.
       if (initiator)
@@ -273,7 +271,8 @@
   function sendMessage(message) {
     var msgString = JSON.stringify(message);
     console.log('C->S: ' + msgString);
-    path = '/message?r=33303289' + '&u=20928238';
+    path = '/message?r={{room_key}}' + '&u={{ me }}';
+    console.log('C->S: ' + path);
     var xhr = new XMLHttpRequest();
     xhr.open('POST', path, true);
     xhr.send(msgString);

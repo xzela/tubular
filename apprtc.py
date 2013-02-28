@@ -38,6 +38,8 @@ def sanitize(key):
 
 
 def make_token(room, user):
+    # logging.info("ROOM !!!!!!!!!: " + room.key().id_or_name())
+    # logging.info("USER " + user)
     return room.key().id_or_name() + '/' + user
 
 
@@ -122,7 +124,7 @@ class DisconnectPage(webapp.RequestHandler):
             room.remove_user(user)
             logging.info('User ' + user + ' removed from room ' + room_key)
             logging.info('Room ' + room_key + ' has state ' + str(room))
-            if other_user:
+            if other_user != None:
                 channel.send_message(make_token(room, other_user), '{"type":"bye"}')
                 logging.info('Sent BYE to ' + other_user)
         logging.warning('User ' + user + ' disconnected from room ' + room_key)
@@ -141,13 +143,13 @@ class MessagePage(webapp.RequestHandler):
                 room.remove_user(user)
                 logging.info('User ' + user + ' quit from room ' + room_key)
                 logging.info('Room ' + room_key + ' has state ' + str(room))
-            if other_user:
+            if other_user != None:
                 # special case the loopback scenario
                 if other_user == user:
                     message = message.replace("\"offer\"", "\"answer\"")
                     message = message.replace("a=crypto:0 AES_CM_128_HMAC_SHA1_32", "a=xrypto:0 AES_CM_128_HMAC_SHA1_32")
-            channel.send_message(make_token(room, other_user), message)
-            logging.info('Delivered message to user ' + other_user)
+                channel.send_message(make_token(room, other_user), message)
+                logging.info('Delivered message to user ' + other_user)
         else:
             logging.warning('Unknown room ' + room_key)
 
@@ -159,6 +161,7 @@ class MainPage(webapp.RequestHandler):
         """Renders the main page. When this page is shown, we create a new
         channel to push asynchronous updates to the client."""
         room_key = sanitize(self.request.get('r'))
+        logging.debug("attempting to find room by room_key" + room_key)
         debug = self.request.get('debug')
         stun_server = self.request.get('ss')
         turn_server = self.request.get('ts')
@@ -171,10 +174,18 @@ class MainPage(webapp.RequestHandler):
             logging.info('Redirecting visitor to base URL to ' + redirect)
             return
 
-        user = None
+        if self.request.get('u'):
+            user = self.request.get('u')
+        else:
+            user = None
         initiator = 0
+
         room = Room.get_by_key_name(room_key)
+        logging.info("!!! ROOM START")
+        logging.info(room)
+        logging.info("!!! ROOM END")
         if not room and debug != "full":
+            logging.info("I MUST CREATE NEW ROOM!")
             # New room.
             user = generate_user(8)
             room = Room(key_name=room_key)
@@ -217,7 +228,7 @@ class MainPage(webapp.RequestHandler):
         logging.info('Room ' + room_key + ' has state ' + str(room))
 
 
-application = webapp.WSGIApplication([
+app = webapp.WSGIApplication([
     ('/', MainPage),
     ('/message', MessagePage),
     ('/_ah/channel/connected/', ConnectPage),
@@ -226,7 +237,7 @@ application = webapp.WSGIApplication([
 
 
 def main():
-    run_wsgi_app(application)
+    run_wsgi_app(app)
 
 if __name__ == "__main__":
-  main()
+    main()
