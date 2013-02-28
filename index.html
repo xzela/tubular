@@ -219,7 +219,7 @@
       console.log("Creating PeerConnection.");
       createPeerConnection();
       console.log("Adding local stream.");
-      //pc.addStream(localStream);
+      pc.addStream(localStream);
       started = true;
       // Caller initiates offer to peer.
       if (initiator)
@@ -242,8 +242,8 @@
        }
      }
     constraints = mergeConstraints(constraints, sdpConstraints);
-    console.log("Sending offer to peer, with constraints: \n" +
-                "  \"" + JSON.stringify(constraints) + "\".")
+    console.log("Sending offer to peer, with constraints: \n" + "  \"" + JSON.stringify(constraints) + "\".")
+
     pc.createOffer(setLocalAndSendMessage, null, constraints);
   }
 
@@ -280,7 +280,7 @@
 
   function processSignalingMessage(message) {
     var msg = JSON.parse(message);
-
+    console.log(msg);
     if (msg.type === 'offer') {
       // Callee creates PeerConnection
       if (!initiator && !started)
@@ -288,13 +288,15 @@
 
       pc.setRemoteDescription(new RTCSessionDescription(msg));
       doAnswer();
-    } else if (msg.type === 'answer' && started) {
+    }
+    else if (msg.type === 'answer' && started) {
       pc.setRemoteDescription(new RTCSessionDescription(msg));
-    } else if (msg.type === 'candidate' && started) {
-      var candidate = new RTCIceCandidate({sdpMLineIndex:msg.label,
-                                           candidate:msg.candidate});
+    }
+    else if (msg.type === 'candidate' && started) {
+      var candidate = new RTCIceCandidate({sdpMLineIndex:msg.label, candidate:msg.candidate});
       pc.addIceCandidate(candidate);
-    } else if (msg.type === 'bye' && started) {
+    }
+    else if (msg.type === 'bye' && started) {
       onRemoteHangup();
     }
   }
